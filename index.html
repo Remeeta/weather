@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AtmosAI – Premium Weather Experience</title>
+  <meta name="description" content="AtmosAI – A futuristic AI-powered weather app with real-time data, forecasts, and stunning animations." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Lottie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-dark" data-weather="clear">
+
+  <!-- Animated Background Canvas -->
+  <canvas id="weather-canvas"></canvas>
+
+  <!-- Background Gradient Orbs -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ===== LOADING SCREEN ===== -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loader-content">
+      <div class="loader-logo">
+        <i class="fa-solid fa-wind"></i>
+        <span>Weatherly</span>
+      </div>
+      <div class="loader-ring">
+        <div class="loader-ring-inner"></div>
+      </div>
+      <p class="loader-text">Detecting your location…</p>
+    </div>
+  </div>
+
+  <!-- ===== AUTH MODAL ===== -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="modal-card glass-card">
+      <button id="close-auth-modal" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header">
+        <div class="modal-icon"><i class="fa-solid fa-user-astronaut"></i></div>
+        <h2>Sign In to Weatherly</h2>
+        <p>Save your favourite cities & search history</p>
+      </div>
+      <button id="google-signin-btn" class="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" />
+        Continue with Google
+      </button>
+      <div class="modal-divider"><span>or browse as guest</span></div>
+      <button id="guest-btn" class="btn-ghost">Continue as Guest</button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div id="app" class="app hidden">
+
+    <!-- NAV -->
+    <nav class="navbar glass-nav">
+      <div class="nav-brand">
+        <i class="fa-solid fa-wind"></i>
+        <span>Weatherly</span>
+      </div>
+
+      <div class="search-wrapper" id="search-wrapper">
+        <div class="search-box glass-input">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="search-input" placeholder="Search city…" autocomplete="off" aria-label="Search city" />
+          <button id="search-btn" aria-label="Search"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+        <div id="search-suggestions" class="search-suggestions glass-card hidden"></div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="location-btn" class="icon-btn" title="Use my location" aria-label="Use my location">
+          <i class="fa-solid fa-location-crosshairs"></i>
+        </button>
+        <button id="unit-toggle" class="icon-btn unit-pill" title="Toggle °C / °F" aria-label="Toggle temperature unit">°C</button>
+        <button id="theme-toggle" class="icon-btn" title="Toggle dark/light mode" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <button id="auth-btn" class="icon-btn" title="Sign In" aria-label="Sign in">
+          <i class="fa-solid fa-user"></i>
+        </button>
+        <div id="user-avatar-wrap" class="user-avatar-wrap hidden">
+          <img id="user-avatar" src="" alt="User Avatar" class="user-avatar" />
+          <div id="user-dropdown" class="user-dropdown glass-card hidden">
+            <p id="user-name-display" class="user-name"></p>
+            <button id="signout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- ===== HERO / CURRENT WEATHER ===== -->
+      <section class="hero-section" id="hero-section">
+        <div class="hero-left">
+          <div class="location-chip" id="location-chip">
+            <i class="fa-solid fa-location-dot"></i>
+            <span id="city-name">—</span>
+            <span id="country-code"></span>
+          </div>
+
+          <div class="current-temp-wrap">
+            <div id="lottie-main" class="lottie-main-icon"></div>
+            <div class="temp-block">
+              <h1 id="current-temp" class="temp-display">—°</h1>
+              <p id="feels-like" class="feels-text">Feels like —°</p>
+            </div>
+          </div>
+
+          <p id="weather-desc" class="weather-desc">—</p>
+
+          <div class="datetime-row">
+            <span id="current-date"></span>
+            <span class="dot">•</span>
+            <span id="current-time"></span>
+          </div>
+
+          <!-- ALERTS BANNER -->
+          <div id="alerts-banner" class="alerts-banner hidden">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="alert-text"></span>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <!-- STATS GRID -->
+          <div class="stats-grid">
+            <div class="stat-card glass-card" id="stat-humidity">
+              <div class="stat-icon"><i class="fa-solid fa-droplet"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Humidity</span>
+                <span class="stat-value" id="val-humidity">—</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card" id="stat-wind">
+              <div class="stat-icon"><i class="fa-solid fa-wind"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Wind</span>
+                <span class="stat-value" id="val-wind">—</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card" id="stat-pressure">
+              <div class="stat-icon"><i class="fa-solid fa-gauge-high"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Pressure</span>
+                <span class="stat-value" id="val-pressure">—</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card" id="stat-visibility">
+              <div class="stat-icon"><i class="fa-solid fa-eye"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Visibility</span>
+                <span class="stat-value" id="val-visibility">—</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card" id="stat-uv">
+              <div class="stat-icon"><i class="fa-solid fa-sun"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">UV Index</span>
+                <span class="stat-value" id="val-uv">—</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card" id="stat-aqi">
+              <div class="stat-icon"><i class="fa-solid fa-smog"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Air Quality</span>
+                <span class="stat-value" id="val-aqi">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUNRISE / SUNSET -->
+          <div class="sun-card glass-card">
+            <div class="sun-side">
+              <i class="fa-solid fa-sun sun-rise"></i>
+              <div>
+                <span class="stat-label">Sunrise</span>
+                <span class="stat-value" id="val-sunrise">—</span>
+              </div>
+            </div>
+            <div class="sun-progress-wrap">
+              <svg id="sun-arc-svg" viewBox="0 0 200 100" class="sun-arc">
+                <path d="M 10 90 Q 100 0 190 90" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                <path id="sun-arc-fill" d="M 10 90 Q 100 0 190 90" fill="none" stroke="url(#sunGrad)" stroke-width="2.5" stroke-dasharray="220" stroke-dashoffset="220"/>
+                <defs>
+                  <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#f97316"/>
+                    <stop offset="100%" style="stop-color:#facc15"/>
+                  </linearGradient>
+                </defs>
+                <circle id="sun-dot" cx="10" cy="90" r="5" fill="#facc15" filter="url(#glow)"/>
+                <defs>
+                  <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+              </svg>
+            </div>
+            <div class="sun-side">
+              <i class="fa-solid fa-moon sun-set"></i>
+              <div>
+                <span class="stat-label">Sunset</span>
+                <span class="stat-value" id="val-sunset">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== HOURLY FORECAST ===== -->
+      <section class="section-card glass-card" id="hourly-section">
+        <div class="section-header">
+          <h2><i class="fa-solid fa-clock"></i> Hourly Forecast</h2>
+        </div>
+        <div class="hourly-scroll" id="hourly-scroll">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- ===== 7-DAY FORECAST ===== -->
+      <section class="section-card glass-card" id="daily-section">
+        <div class="section-header">
+          <h2><i class="fa-solid fa-calendar-days"></i> 7-Day Forecast</h2>
+        </div>
+        <div class="daily-list" id="daily-list">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- ===== BOTTOM ROW ===== -->
+      <div class="bottom-row">
+
+        <!-- FAVOURITES -->
+        <section class="section-card glass-card" id="favourites-section">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-heart"></i> Favourites</h2>
+            <button id="add-fav-btn" class="btn-icon-sm" title="Add current city to favourites">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+          <div id="fav-list" class="fav-list">
+            <p class="empty-state">Sign in to save favourites</p>
+          </div>
+        </section>
+
+        <!-- RECENT SEARCHES -->
+        <section class="section-card glass-card" id="recent-section">
+          <div class="section-header">
+            <h2><i class="fa-solid fa-history"></i> Recent Searches</h2>
+            <button id="clear-history-btn" class="btn-icon-sm" title="Clear history">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+          <div id="recent-list" class="recent-list">
+            <p class="empty-state">No recent searches</p>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <span>Weatherly © 2026 · Powered by <a href="https://openweathermap.org" target="_blank" rel="noopener">OpenWeatherMap</a></span>
+    </footer>
+
+  </div><!-- end #app -->
+
+  <!-- ERROR TOAST -->
+  <div id="toast" class="toast hidden">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="firebase-config.js"></script>
+  <!-- Main script -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
