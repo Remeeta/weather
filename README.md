@@ -1,4 +1,4 @@
-# 🌤 AtmosAI – Premium Weather Web App
+# 🌤 Weatherly – Premium Weather Web App
 
 A futuristic glassmorphism weather application built with **HTML5, CSS3, and Vanilla JavaScript** — powered by OpenWeatherMap and Firebase.
 
